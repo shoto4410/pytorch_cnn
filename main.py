@@ -2,6 +2,7 @@ import torch
 from torch import nn, optim
 from torch.utils.data import (Dataset,DataLoader,TensorDataset)
 import tqdm
+
 from torchvision.datasets import FashionMNIST
 from torchvision import transforms
 
@@ -52,3 +53,61 @@ net = nn.Sequential(
     conv_net,
     mlp
 )
+
+# 評価のヘルパー関数
+def eval_net(net, data_loader, device="cpu"):
+    # DropoutやBatchNormを無効化
+    net.eval()
+    ys = []
+    ypreds = []
+    for x, y in data_loader:
+        x = x.to(device)
+        y = y.to(device)
+        
+        #確率が最大のクラスを予測
+        #ここではforward(推論)の計算だけなので自動微分に
+        #必要な処理はoffにして余計な計算を省く
+        with torch.no_grad():
+            _, y_pred = net(x).max(1)
+        ys.append(y)
+        ypreds.append(y_pred)
+        
+    #ミニバッチごとの予測結果などを1つにまとめる
+    ys = torch.cat(ys)
+    ypreds = torch.cat(ypreds)
+    #予測結果を計算
+    acc = (ys == ypreds).float().sum() / len(ys)
+    return acc.item()
+
+# 訓練のヘルパー関数
+def train_net(net, train_loader, test_loader, optimizer_cls=optim.Adam, loss_fn=nn.CrossEntropyLoss(), n_iter=10, device="cpu"):
+    train_losses = []
+    train_acc = []
+    val_acc = []
+    optimizer = optimizer_cls(net.parameter())
+    for epoch in range(n_iter):
+        running_loss = 0.0
+        #ネットワークを訓練モードにする
+        net.train()
+        n = 0
+        n_acc = 0
+        #非常に時間がかかるのでtqdmを使用してプログレスバーを出す
+        for i , (xx, yy) in tqdm.tqdm(enumerate(train_loader), total=len(train_loader)):
+            xx = xx.to(device)
+            yy = yy.to(device)
+            h = net(xx)
+            loss = loss_fn(h, yy)
+            optimizer.zero_grad()
+            loss.backward()
+            ootimizer.step()
+            running_loss += loss.item()
+            n += len(xx)
+            _, y_pred = h.max(1)
+            n_acc += (yy == y_pred).float().sum().item()
+        train_losses.append(running_loss / i)
+        #訓練データの予測精度
+        train_acc.append(n_acc / n)
+        #検証データの予測精度
+        val_acc.append(eval_net(net, test_loader, device))
+        #このepochでの結果を表示
+        print(epoch, train_losses[-1], train_acc[-1], val_acc[-1], flush=True)
