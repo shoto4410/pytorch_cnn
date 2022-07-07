@@ -111,3 +111,10 @@ def train_net(net, train_loader, test_loader, optimizer_cls=optim.Adam, loss_fn=
         val_acc.append(eval_net(net, test_loader, device))
         #このepochでの結果を表示
         print(epoch, train_losses[-1], train_acc[-1], val_acc[-1], flush=True)
+
+#ネットワークの全パラメータをGPUに転送
+#net.to("cuda:0")
+
+#訓練を実行
+#train_net(net, train_loader, test_loader, n_iter=20, device="cuda:0")
+train_net(net, train_loader, test_loader, n_iter=20)
