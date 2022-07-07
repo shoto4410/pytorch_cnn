@@ -33,3 +33,22 @@ conv_net = nn.Sequential(
     nn.Dropout2d(0.25),
     FlattenLayer()
 )
+#畳み込みによって最終的にどのようなサイズになっているかを、
+#実際にダミーデータを入れてみて確認する。
+test_input = torch.ones(1, 1, 28, 28)
+conv_output_size = conv_net(test_input).size()[-1]
+
+#2層のMLP
+mlp = nn.Sequential(
+    nn.Linear(conv_output_size, 200),
+    nn.ReLU(),
+    nn.BatchNorm1d(200),
+    nn.Dropout(0.25),
+    nn.Linear(200, 10)
+)
+
+#最終的なCNN
+net = nn.Sequential(
+    conv_net,
+    mlp
+)
