@@ -84,7 +84,7 @@ def train_net(net, train_loader, test_loader, optimizer_cls=optim.Adam, loss_fn=
     train_losses = []
     train_acc = []
     val_acc = []
-    optimizer = optimizer_cls(net.parameter())
+    optimizer = optimizer_cls(net.parameters())
     for epoch in range(n_iter):
         running_loss = 0.0
         #ネットワークを訓練モードにする
@@ -99,7 +99,7 @@ def train_net(net, train_loader, test_loader, optimizer_cls=optim.Adam, loss_fn=
             loss = loss_fn(h, yy)
             optimizer.zero_grad()
             loss.backward()
-            ootimizer.step()
+            optimizer.step()
             running_loss += loss.item()
             n += len(xx)
             _, y_pred = h.max(1)
